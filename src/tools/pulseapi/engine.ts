@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto"
 import { readFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
+import { basename, dirname, resolve } from "node:path"
 import { createRequire } from "node:module"
 import { parse as parseYaml } from "yaml"
 
@@ -236,7 +236,7 @@ export async function runSuite(path: string, opts: RunOptions): Promise<RequestR
   const { suite, lines } = loadSuite(path)
   const vars: Record<string, unknown> = { ...opts.variables, ...(suite.variables ?? {}) }
   const results: RequestResult[] = []
-  const suiteName = suite.name ?? path.split("/").pop()!
+  const suiteName = suite.name ?? basename(path)
   for (const [i, raw] of suite.requests.entries()) {
     const label = raw.name ?? `${raw.method ?? "GET"} ${raw.url}`
     if (opts.filter && !label.toLowerCase().includes(opts.filter.toLowerCase()) && !suiteName.toLowerCase().includes(opts.filter.toLowerCase())) continue

@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process"
 import { statSync } from "node:fs"
-import { join, resolve } from "node:path"
+import { basename, join, resolve } from "node:path"
 import { parse as parseYaml } from "yaml"
 import { exists, readJson, readLines, readText, walk } from "../core/fs.js"
 import { allDeps, lockfiles, readPkg, workspaceDirs, type PackageJson } from "../core/project.js"
@@ -413,7 +413,7 @@ export async function scanRepo(root: string, opts: { skip?: Category[] } = {}): 
   const grade = overall >= 90 ? "A" : overall >= 80 ? "B" : overall >= 65 ? "C" : overall >= 50 ? "D" : "F"
   return {
     tool: "repodoctor",
-    title: `RepoDoctor: ${ctx.pkg?.name ?? root.split("/").pop()}`,
+    title: `RepoDoctor: ${ctx.pkg?.name ?? basename(root)}`,
     score: overall,
     summary: { grade, files: files.length, "test files": testStats.tests, workspaces: dirs.length - 1 },
     sections: [
