@@ -16,6 +16,14 @@
     "api-testing"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wealthometer/devdoctor.git"
+  },
+  "homepage": "https://github.com/Wealthometer/devdoctor#readme",
+  "bugs": {
+    "url": "https://github.com/Wealthometer/devdoctor/issues"
+  },
   "author": "Wealth Hajoh <wealthhajoh87@gmail.com>",
   "type": "module",
   "engines": {
