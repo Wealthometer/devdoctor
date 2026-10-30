@@ -52,5 +52,5 @@ jobs:
       - name: Install the tarball in an empty project and run every binary
         run: |
           mkdir /tmp/smoke && cd /tmp/smoke && npm init -y >/dev/null
-          npm install "$GITHUB_WORKSPACE"/devdoctor-*.tgz
+          npm install "$GITHUB_WORKSPACE"/wealthometer-devdoctor-*.tgz
           for bin in devdoctor repodoctor migraguard pulseapi depscope envdoctor commitsmith archwatch loglens; do npx --no-install $bin --version; done

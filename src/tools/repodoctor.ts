@@ -38,7 +38,7 @@ export const BIN_PACKAGES: Record<string, string[]> = {
   oxlint: ["oxlint"], "npm-run-all": ["npm-run-all", "npm-run-all2"], "run-s": ["npm-run-all", "npm-run-all2"], "run-p": ["npm-run-all", "npm-run-all2"], "ts-jest": ["ts-jest"], swc: ["@swc/cli"],
   babel: ["@babel/cli"], "wait-on": ["wait-on"], serve: ["serve"], "http-server": ["http-server"], typedoc: ["typedoc"], "api-extractor": ["@microsoft/api-extractor"], wrangler: ["wrangler"], vercel: ["vercel"],
   "electron-builder": ["electron-builder"], electron: ["electron"], expo: ["expo"], "react-native": ["react-native"], storybook: ["storybook", "@storybook/cli"], "sb": ["storybook"], "start-storybook": ["@storybook/react"], knip: ["knip"],
-  devdoctor: ["devdoctor"], repodoctor: ["devdoctor"], migraguard: ["devdoctor"], envdoctor: ["devdoctor"], depscope: ["devdoctor"], archwatch: ["devdoctor"], commitsmith: ["devdoctor"], pulseapi: ["devdoctor"], loglens: ["devdoctor"],
+  devdoctor: ["@wealthometer/devdoctor"], repodoctor: ["@wealthometer/devdoctor"], migraguard: ["@wealthometer/devdoctor"], envdoctor: ["@wealthometer/devdoctor"], depscope: ["@wealthometer/devdoctor"], archwatch: ["@wealthometer/devdoctor"], commitsmith: ["@wealthometer/devdoctor"], pulseapi: ["@wealthometer/devdoctor"], loglens: ["@wealthometer/devdoctor"],
 }
 
 type Ctx = { root: string; files: string[]; pkg: PackageJson | null; checks: Check[] }

@@ -1,5 +1,5 @@
 {
-  "name": "devdoctor",
+  "name": "@wealthometer/devdoctor",
   "version": "0.1.0",
   "description": "Eight pre-production checks in one CLI: repo health, migration safety, API tests, dependencies, env config, commits, architecture boundaries and logs.",
   "keywords": [

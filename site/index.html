@@ -186,7 +186,7 @@
       <a href="#ci">CI</a>
       <a href="#config">Config</a>
       <a href="https://github.com/Wealthometer/devdoctor">GitHub</a>
-      <a href="https://www.npmjs.com/package/devdoctor">npm</a>
+      <a href="https://www.npmjs.com/package/@wealthometer/devdoctor">npm</a>
     </nav>
   </div>
 </header>
@@ -198,7 +198,7 @@
         <h1 id="hero-title">A check-up for your repo before production does it for you.</h1>
         <p class="lead">Eight checks for JavaScript and TypeScript projects in one install. They catch the migration that locks a table, the env var nobody documented, and the import that breaks your architecture.</p>
         <div class="install">
-          <code id="install-cmd"><span class="pr">$ </span>npx devdoctor check</code>
+          <code id="install-cmd"><span class="pr">$ </span>npx @wealthometer/devdoctor check</code>
           <button type="button" id="copy" aria-label="Copy the command">Copy</button>
         </div>
         <div class="cta">
@@ -307,10 +307,10 @@
       - <span class="k">uses</span>: actions/setup-node@v4
         <span class="k">with</span>: { <span class="k">node-version</span>: 22 }
       - <span class="k">run</span>: <span class="s">npm ci</span>
-      - <span class="k">run</span>: <span class="s">npx devdoctor check -f sarif -o dd.sarif --fail-on none</span>
+      - <span class="k">run</span>: <span class="s">npx @wealthometer/devdoctor check -f sarif -o dd.sarif --fail-on none</span>
       - <span class="k">uses</span>: github/codeql-action/upload-sarif@v3
         <span class="k">with</span>: { <span class="k">sarif_file</span>: dd.sarif }
-      - <span class="k">run</span>: <span class="s">npx devdoctor check</span>
+      - <span class="k">run</span>: <span class="s">npx @wealthometer/devdoctor check</span>
       - <span class="k">run</span>: <span class="s">npx migraguard check --since origin/main</span></pre>
         <div class="exit" aria-label="Exit codes">
           <div><code>0</code><span>All clear</span></div>
@@ -358,7 +358,7 @@
         <p class="intro" style="margin: 14px 0 0">It takes seconds and changes nothing in your repo.</p>
       </div>
       <div class="install" style="min-width: min(420px, 100%)">
-        <code><span class="pr">$ </span>npx devdoctor check</code>
+        <code><span class="pr">$ </span>npx @wealthometer/devdoctor check</code>
         <button type="button" class="copy-again" aria-label="Copy the command">Copy</button>
       </div>
     </div>
@@ -368,7 +368,7 @@
 <footer>
   <div class="wrap">
     <span>DevDoctor · MIT License · Built by Wealth Hajoh</span>
-    <span><a href="https://www.npmjs.com/package/devdoctor">npm</a> · <a href="https://github.com/Wealthometer/devdoctor">GitHub</a> · <a href="https://github.com/Wealthometer/devdoctor/blob/main/CHANGELOG.md">Changelog</a></span>
+    <span><a href="https://www.npmjs.com/package/@wealthometer/devdoctor">npm</a> · <a href="https://github.com/Wealthometer/devdoctor">GitHub</a> · <a href="https://github.com/Wealthometer/devdoctor/blob/main/CHANGELOG.md">Changelog</a></span>
   </div>
 </footer>
 
@@ -548,7 +548,7 @@
   for (const btn of document.querySelectorAll("#copy, .copy-again")) {
     btn.addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText("npx devdoctor check")
+        await navigator.clipboard.writeText("npx @wealthometer/devdoctor check")
         btn.textContent = "Copied"
       } catch {
         btn.textContent = "Select it"

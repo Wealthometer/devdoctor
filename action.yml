@@ -23,10 +23,10 @@ runs:
       shell: bash
       run: |
         set +e
-        npx --yes devdoctor@${{ inputs.version }} ${{ inputs.command }} --fail-on ${{ inputs.fail-on }}
+        npx --yes @wealthometer/devdoctor@${{ inputs.version }} ${{ inputs.command }} --fail-on ${{ inputs.fail-on }}
         status=$?
         if [ "${{ inputs.sarif }}" = "true" ]; then
-          npx --yes devdoctor@${{ inputs.version }} ${{ inputs.command }} --format sarif --output devdoctor.sarif --fail-on none
+          npx --yes @wealthometer/devdoctor@${{ inputs.version }} ${{ inputs.command }} --format sarif --output devdoctor.sarif --fail-on none
         fi
         exit $status
     - name: Upload SARIF

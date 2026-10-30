@@ -14,8 +14,8 @@ Eight pre-production checks for JavaScript and TypeScript projects, in one packa
 | **LogLens** | Groups thousands of log lines into a short list of distinct problems, recurring exceptions and bursts | `loglens analyze ./logs/app.log` |
 
 ```bash
-npm install --save-dev devdoctor
-npx devdoctor check          # every static tool that applies to this repo, one exit code
+npm install --save-dev @wealthometer/devdoctor
+npx @wealthometer/devdoctor check          # every static tool that applies to this repo, one exit code
 ```
 
 Every tool is also installed as its own command (`npx migraguard …`) and is available as `devdoctor <tool> …`.
@@ -54,7 +54,7 @@ Every tool works the same way:
   - `1`: findings at or above that severity.
   - `2`: usage or configuration error.
 - **Findings.** Each finding has a stable rule id, a severity, a file and line where there is one, and a one-line hint on how to fix it.
-- **Config.** Optional. Put it in `devdoctor.config.json` (or `.ts`/`.js`/`.mjs`, or a `"devdoctor"` key in package.json), with one section per tool. Anything under `"ignore"` (rule ids, files, or `rule:file`) is dropped from reports. There's a JSON Schema at `node_modules/devdoctor/schemas/devdoctor.schema.json` for editor autocomplete, and a complete example in [examples/devdoctor.config.json](examples/devdoctor.config.json).
+- **Config.** Optional. Put it in `devdoctor.config.json` (or `.ts`/`.js`/`.mjs`, or a `"devdoctor"` key in package.json), with one section per tool. Anything under `"ignore"` (rule ids, files, or `rule:file`) is dropped from reports. There's a JSON Schema at `node_modules/@wealthometer/devdoctor/schemas/devdoctor.schema.json` for editor autocomplete, and a complete example in [examples/devdoctor.config.json](examples/devdoctor.config.json).
 - **Output streams.** Progress messages go to stderr, so stdout stays clean for piping.
 
 ---
@@ -287,10 +287,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: npx devdoctor check --format sarif --output devdoctor.sarif --fail-on none
+      - run: npx @wealthometer/devdoctor check --format sarif --output devdoctor.sarif --fail-on none
       - uses: github/codeql-action/upload-sarif@v3
         with: { sarif_file: devdoctor.sarif, category: devdoctor }
-      - run: npx devdoctor check                                  # fails the job on errors
+      - run: npx @wealthometer/devdoctor check                                  # fails the job on errors
       - run: npx migraguard check --since origin/${{ github.base_ref }}
       - run: npx commitsmith lint --from origin/${{ github.base_ref }}
       - run: npx envdoctor check --schema src/env.ts
@@ -301,7 +301,7 @@ The repository also ships a composite action (`action.yml`) that runs a command 
 ## Programmatic use
 
 ```ts
-import { checkMigrations, scanRepo, analyzeLogs, render } from "devdoctor"
+import { checkMigrations, scanRepo, analyzeLogs, render } from "@wealthometer/devdoctor"
 
 const report = await scanRepo(process.cwd())
 console.log(report.score, report.findings.length)

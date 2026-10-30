@@ -15,7 +15,7 @@ npm no longer wants long-lived tokens in CI. Tokens that skip 2FA lose direct pu
 Run these from the repo folder on your laptop.
 
 1. **Create an npm account** at [npmjs.com/signup](https://www.npmjs.com/signup), then turn on two-factor authentication under Account → Two-Factor Authentication.
-2. **Check the name is still free:** run `npm view devdoctor`. A `404 Not Found` means it's yours to take.
+2. **Check the name is still free:** run `npm view @wealthometer/devdoctor`. A `404 Not Found` means it's yours to take.
 3. **Add your GitHub repo to `package.json`.** Trusted publishing only works if this URL matches your repo exactly, including capital letters. Replace `YOUR-USERNAME` and paste these lines under `"license"`:
 
    ```json
@@ -54,7 +54,7 @@ Run these from the repo folder on your laptop.
 
    The release workflow sees that 0.1.0 is already on npm, so it skips publishing and only creates the GitHub release.
 
-The package is now at `https://www.npmjs.com/package/devdoctor`, and anyone can run `npx devdoctor check`.
+The package is now at `https://www.npmjs.com/package/@wealthometer/devdoctor`, and anyone can run `npx @wealthometer/devdoctor check`.
 
 ## 2. Turn on trusted publishing
 
@@ -90,7 +90,7 @@ Then:
 1. Run the `npm version …` command from the table. It updates `package.json`, commits, and creates the tag (for example `v0.1.1`). Your working tree must be clean before you run it.
 2. Run `git push --follow-tags`. This pushes the commit and the tag together, and the tag starts the Release workflow.
 3. Watch the run in your repo's **Actions** tab. It takes about 2 minutes: tests, build, publish, then the GitHub release.
-4. Check the release landed: `npm view devdoctor version` should print the new number, and `npx devdoctor@latest --version` should work from any folder.
+4. Check the release landed: `npm view @wealthometer/devdoctor version` should print the new number, and `npx @wealthometer/devdoctor@latest --version` should work from any folder.
 
 If the tests fail in the workflow, nothing is published. Fix the problem, then move the tag (see Troubleshooting).
 
@@ -101,13 +101,13 @@ Once a version number has been published, it can't be used again, even after an 
 - **Broken release:** publish a fix with `npm version patch`, then warn people off the bad version:
 
   ```bash
-  npm deprecate devdoctor@0.1.1 "Broken CLI on Windows, use 0.1.2"
+  npm deprecate @wealthometer/devdoctor@0.1.1 "Broken CLI on Windows, use 0.1.2"
   ```
 
   Installs of that version still work, but they show your message.
-- **Published by accident, within 72 hours:** run `npm unpublish devdoctor@0.1.1`. After 72 hours, or once other packages depend on it, deprecate it instead.
-- **Beta releases:** run `npm version prerelease --preid beta`, then `git push --follow-tags`. The workflow publishes any version with a dash in it under the `next` tag. People opt in with `npm install devdoctor@next`; everyone else keeps getting the stable version.
-- **Point `latest` back at an older version:** run `npm dist-tag add devdoctor@0.1.0 latest`.
+- **Published by accident, within 72 hours:** run `npm unpublish @wealthometer/devdoctor@0.1.1`. After 72 hours, or once other packages depend on it, deprecate it instead.
+- **Beta releases:** run `npm version prerelease --preid beta`, then `git push --follow-tags`. The workflow publishes any version with a dash in it under the `next` tag. People opt in with `npm install @wealthometer/devdoctor@next`; everyone else keeps getting the stable version.
+- **Point `latest` back at an older version:** run `npm dist-tag add @wealthometer/devdoctor@0.1.0 latest`.
 
 ## Troubleshooting
 
@@ -120,7 +120,7 @@ Once a version number has been published, it can't be used again, even after an 
 | `E404` or `ENEEDAUTH` in the Release workflow | The trusted publisher fields don't match | Recheck the username, repo and `release.yml` on npmjs.com, and check that `repository.url` in `package.json` is your exact repo |
 | The "Check the tag matches package.json" step fails | You pushed a tag by hand that doesn't match the version | Always create tags with `npm version …`. To redo a tag: `git tag -d v0.1.1 && git push origin :refs/tags/v0.1.1`, fix the problem, then tag and push again |
 | Tests fail in the workflow | Nothing was published | Fix the tests, commit, then move the tag as in the row above |
-| `npm view` still shows the old version | The registry takes a minute to update | Wait, then run `npm view devdoctor version` again |
+| `npm view` still shows the old version | The registry takes a minute to update | Wait, then run `npm view @wealthometer/devdoctor version` again |
 
 ## The landing page
 
