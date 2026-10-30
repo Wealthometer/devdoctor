@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+# Publishing uses npm trusted publishing (OIDC): no npm token is stored in GitHub.
+# Set it up once on npmjs.com → package Settings → Trusted Publisher (GitHub Actions,
+# this repository, workflow file "release.yml"). Provenance is added automatically.
+permissions:
+  contents: write # create the GitHub release
+  id-token: write # OIDC for npm trusted publishing
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # trusted publishing needs npm 11.5.1+ / Node 22.14+
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm ci
+      - name: Check the tag matches package.json
+        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - run: npm run typecheck && npm test && npm run build
+      - name: Skip publishing if this version is already on npm (e.g. 0.1.0, published by hand)
+        id: published
+        run: |
+          if npm view "$(node -p 'require("./package.json").name')@${GITHUB_REF_NAME#v}" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+      # Pre-releases (1.2.0-beta.0) go to the "next" dist-tag so `npm install devdoctor` keeps getting the stable one.
+      - run: npm publish --access public --tag "$(case "${GITHUB_REF_NAME}" in *-*) echo next ;; *) echo latest ;; esac)"
+        if: steps.published.outputs.exists != 'true'
+      - name: GitHub release with the changelog entry
+        run: |
+          node bin/commitsmith.js changelog --from "$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)" --version "${GITHUB_REF_NAME#v}" > notes.md
+          gh release create "$GITHUB_REF_NAME" --notes-file notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}

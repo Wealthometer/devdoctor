@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevDoctor: a check-up for your repo before production</title>
+<meta name="description" content="Eight pre-production checks for JavaScript and TypeScript projects in one npm package: repo health, migration safety, API tests, dependencies, env config, commits, architecture and logs.">
+<meta property="og:title" content="DevDoctor">
+<meta property="og:description" content="A check-up for your repo before production does it for you. Eight checks, one install.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0f1a16">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1a16'/%3E%3Cpath d='M4 17h6l3-7 4 13 3-6h8' fill='none' stroke='%237bd88f' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /*
+    DevDoctor: the repo's check-up. A clinical chart (cool paper, ruled lines, one teal ink)
+    with a live vital-signs monitor as the hero: the terminal output is the product.
+  */
+  :root {
+    --paper: #f2f4ef;
+    --sheet: #fbfcf9;
+    --ink: #0f1a16;
+    --muted: #46554e;
+    --line: #d3dad1;
+    --teal: #0b6e6e;
+    --teal-ink: #0a5c5c;
+    --signal: #b3440e;
+    --mon: #0f1a16;
+    --mon-2: #16241e;
+    --mon-text: #dce5df;
+    --mon-dim: #8a9a92;
+    --mon-red: #ff8a73;
+    --mon-yellow: #f2c14e;
+    --mon-green: #7bd88f;
+    --mon-blue: #7cc4fa;
+    --mon-cyan: #6ad3cf;
+    --sans: "Familjen Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --wrap: 1180px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0c1411; --sheet: #111b17; --ink: #e6ede8; --muted: #a3b2aa; --line: #24332c;
+      --teal: #5cc8c2; --teal-ink: #7fd8d2; --signal: #ff9b6b; --mon: #070d0b; --mon-2: #0d1714;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  a { color: var(--teal-ink); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 4px; }
+  code, kbd, pre { font-family: var(--mono); }
+  .wrap { width: min(var(--wrap), 100% - 32px); margin-inline: auto; }
+  .skip { position: absolute; left: -999px; }
+  .skip:focus { left: 16px; top: 16px; background: var(--sheet); padding: 8px 12px; z-index: 10; }
+
+  /* Header */
+  header.top { border-bottom: 1px solid var(--line); background: var(--paper); position: sticky; top: 0; z-index: 5; }
+  header.top .wrap { display: flex; align-items: center; gap: 24px; min-height: 64px; flex-wrap: wrap; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
+  .brand svg { flex: none; }
+  nav.links { display: flex; gap: 22px; margin-left: auto; flex-wrap: wrap; }
+  nav.links a { color: var(--muted); text-decoration: none; font-weight: 500; font-size: 15px; }
+  nav.links a:hover { color: var(--ink); }
+
+  /* Hero */
+  .hero { padding: 72px 0 40px; }
+  .hero .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); gap: 56px; align-items: start; }
+  .hero h1 { font-size: clamp(40px, 5.4vw, 68px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 22px; font-weight: 700; max-width: 12ch; }
+  .hero p.lead { font-size: 20px; color: var(--muted); margin: 0 0 30px; max-width: 34ch; }
+  .install { display: flex; align-items: stretch; background: var(--mon); color: var(--mon-text); border-radius: 10px; overflow: hidden; max-width: 460px; }
+  .install code { flex: 1; padding: 14px 16px; font-size: 15px; white-space: nowrap; overflow-x: auto; }
+  .install code .pr { color: var(--mon-dim); user-select: none; }
+  .install button { border: 0; border-left: 1px solid #2a3a33; background: var(--mon-2); color: var(--mon-text); font: 600 14px var(--sans); padding: 0 18px; cursor: pointer; min-width: 84px; }
+  .install button:hover { background: #20322b; }
+  .cta { display: flex; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 20px; border-radius: 8px; font-weight: 600; font-size: 16px; text-decoration: none; }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { background: var(--teal-ink); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-primary { color: #04110f; } }
+  .btn-quiet { border: 1px solid var(--line); color: var(--ink); background: var(--sheet); }
+  .btn-quiet:hover { border-color: var(--muted); }
+  .meta { margin-top: 26px; color: var(--muted); font-size: 14px; }
+  .meta b { color: var(--ink); font-weight: 600; }
+
+  /* The monitor: tool tabs + live output */
+  .monitor { background: var(--mon); border-radius: 14px; color: var(--mon-text); box-shadow: 0 30px 60px -30px rgb(15 26 22 / 0.55); overflow: hidden; }
+  .monitor .bar { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--mon-2); border-bottom: 1px solid #22322b; }
+  .ekg { flex: 1; height: 26px; }
+  .ekg path { fill: none; stroke: var(--mon-green); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 520; stroke-dashoffset: 520; animation: trace 2.4s linear infinite; }
+  @keyframes trace { to { stroke-dashoffset: -520; } }
+  @media (prefers-reduced-motion: reduce) { .ekg path { animation: none; stroke-dashoffset: 0; } }
+  .bpm { font: 600 12px var(--mono); color: var(--mon-green); white-space: nowrap; }
+  .tabs { display: flex; gap: 2px; padding: 8px 8px 0; overflow-x: auto; scrollbar-width: thin; background: var(--mon-2); }
+  .tabs button { border: 0; background: transparent; color: var(--mon-dim); font: 600 13px var(--mono); padding: 9px 11px 10px; border-radius: 7px 7px 0 0; cursor: pointer; white-space: nowrap; }
+  .tabs button:hover { color: var(--mon-text); }
+  .tabs button[aria-selected="true"] { background: var(--mon); color: var(--mon-text); }
+  .screen { margin: 0; padding: 18px 20px 22px; font-size: 13px; line-height: 1.6; min-height: 420px; overflow-x: auto; white-space: pre; }
+  .screen .cmd { color: var(--mon-text); }
+  .screen .p { color: var(--mon-dim); }
+  .r { color: var(--mon-red); } .y { color: var(--mon-yellow); } .g { color: var(--mon-green); } .b { color: var(--mon-blue); } .c { color: var(--mon-cyan); } .d { color: var(--mon-dim); } .bo { font-weight: 600; color: #fff; }
+
+  /* Sections */
+  section { padding: 84px 0; }
+  .eyebrowless h2, section h2 { font-size: clamp(30px, 3.6vw, 44px); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 14px; max-width: 22ch; }
+  section .intro { color: var(--muted); font-size: 19px; max-width: 60ch; margin: 0 0 40px; }
+
+  /* The chart: eight tools as rows on a ruled sheet */
+  .chart { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .chart-row { display: grid; grid-template-columns: 220px minmax(0, 1fr) minmax(0, 300px); gap: 28px; padding: 22px 28px; border-top: 1px solid var(--line); align-items: baseline; }
+  .chart-row:first-child { border-top: 0; }
+  .chart-row h3 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
+  .chart-row h3 small { display: block; font: 500 13px var(--mono); color: var(--teal-ink); letter-spacing: 0; margin-top: 2px; }
+  .chart-row p { margin: 0; color: var(--muted); }
+  .chart-row code.cmd { font-size: 13.5px; background: var(--paper); border: 1px solid var(--line); padding: 6px 10px; border-radius: 6px; justify-self: start; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+
+  /* CI */
+  .split { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 56px; align-items: start; }
+  .points { list-style: none; padding: 0; margin: 0; display: grid; gap: 22px; }
+  .points li { padding-left: 34px; position: relative; }
+  .points li::before { content: ""; position: absolute; left: 0; top: 7px; width: 18px; height: 12px; border-left: 2px solid var(--teal); border-bottom: 2px solid var(--teal); transform: rotate(-45deg); transform-origin: left; translate: 3px 3px; }
+  .points b { display: block; font-size: 18px; }
+  .points span { color: var(--muted); }
+  pre.code { background: var(--mon); color: var(--mon-text); border-radius: 12px; padding: 20px 22px; margin: 0; font-size: 13.5px; line-height: 1.65; overflow-x: auto; }
+  .code .k { color: var(--mon-blue); } .code .s { color: var(--mon-green); } .code .cm { color: var(--mon-dim); }
+  .exit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 18px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--sheet); }
+  .exit div { padding: 14px 16px; border-left: 1px solid var(--line); }
+  .exit div:first-child { border-left: 0; }
+  .exit div > code { font-size: 22px; font-weight: 600; display: block; }
+  .exit span { color: var(--muted); font-size: 14px; }
+
+  /* Formats + facts */
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .facts div { padding: 26px 22px; border-left: 1px solid var(--line); }
+  .facts div:first-child { border-left: 0; padding-left: 0; }
+  .facts strong { display: block; font-size: 30px; letter-spacing: -0.02em; line-height: 1.1; }
+  .facts span { color: var(--muted); font-size: 15px; }
+
+  /* Final call */
+  .final { text-align: left; }
+  .final .wrap { border-top: 1px solid var(--line); padding-top: 64px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: end; }
+  .final h2 { margin: 0; }
+  footer { padding: 36px 0 48px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; gap: 20px; flex-wrap: wrap; justify-content: space-between; }
+
+  @media (max-width: 960px) {
+    .hero .wrap, .split { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+    .hero { padding-top: 48px; }
+    .chart-row { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 20px; }
+    .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .facts div:nth-child(3) { border-left: 0; padding-left: 0; }
+    .facts div:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .final .wrap { grid-template-columns: minmax(0, 1fr); }
+    section { padding: 64px 0; }
+  }
+  @media (max-width: 560px) {
+    nav.links { gap: 16px; margin-left: 0; width: 100%; padding-bottom: 10px; }
+    .screen { font-size: 11.5px; min-height: 360px; padding: 14px; }
+    .exit { grid-template-columns: 1fr; }
+    .exit div { border-left: 0; border-top: 1px solid var(--line); }
+    .exit div:first-child { border-top: 0; }
+    .facts { grid-template-columns: minmax(0, 1fr); }
+    .facts div { border-left: 0 !important; padding-left: 0 !important; border-top: 1px solid var(--line); }
+    .facts div:first-child { border-top: 0; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="DevDoctor home">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0f1a16"/><path d="M4 17h6l3-7 4 13 3-6h8" fill="none" stroke="#7bd88f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      devdoctor
+    </a>
+    <nav class="links" aria-label="Main">
+      <a href="#tools">Tools</a>
+      <a href="#ci">CI</a>
+      <a href="#config">Config</a>
+      <!-- Replace YOUR-USERNAME once the repo is on GitHub. -->
+      <a href="https://github.com/YOUR-USERNAME/devdoctor">GitHub</a>
+      <a href="https://www.npmjs.com/package/devdoctor">npm</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap">
+      <div>
+        <h1 id="hero-title">A check-up for your repo before production does it for you.</h1>
+        <p class="lead">Eight checks for JavaScript and TypeScript projects in one install. They catch the migration that locks a table, the env var nobody documented, and the import that breaks your architecture.</p>
+        <div class="install">
+          <code id="install-cmd"><span class="pr">$ </span>npx devdoctor check</code>
+          <button type="button" id="copy" aria-label="Copy the command">Copy</button>
+        </div>
+        <div class="cta">
+          <a class="btn btn-primary" href="#tools">See the eight checks</a>
+          <a class="btn btn-quiet" href="https://github.com/YOUR-USERNAME/devdoctor#readme">Read the docs</a>
+        </div>
+        <p class="meta">Free and MIT licensed · Node <b>20+</b> · Output as text, JSON, Markdown or <b>SARIF</b></p>
+      </div>
+
+      <div class="monitor" role="region" aria-label="Example output">
+        <div class="bar">
+          <svg class="ekg" viewBox="0 0 520 26" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 14h70l8-9 10 18 8-12 6 3h90l6-10 9 20 7-14 5 5h95l8-9 10 18 8-12 6 3h90l6-10 9 20 7-14 5 5h52"/>
+          </svg>
+          <span class="bpm" id="vitals">0 errors</span>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Tools" id="tabs"></div>
+        <pre class="screen" id="screen" role="tabpanel" tabindex="0"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="tools" aria-labelledby="tools-title">
+    <div class="wrap">
+      <h2 id="tools-title">Eight checks, one install</h2>
+      <p class="intro">Each check is its own command, and they all run together with <code>devdoctor check</code>. Every problem comes with a file, a line number and a one-line fix.</p>
+      <div class="chart">
+        <article class="chart-row">
+          <h3>RepoDoctor<small>repo health</small></h3>
+          <p>Grades tests, docs, TypeScript strictness, npm scripts, CI, Docker and hygiene. You get a 0–100 score and a fix for every point lost.</p>
+          <code class="cmd">repodoctor scan ./</code>
+        </article>
+        <article class="chart-row">
+          <h3>MigraGuard<small>migration safety</small></h3>
+          <p>Finds dropped columns, NOT NULL without a default, and indexes built without CONCURRENTLY, before they lock production. Works with PostgreSQL migrations from SQL, Prisma, Drizzle and Knex.</p>
+          <code class="cmd">migraguard check --since origin/main</code>
+        </article>
+        <article class="chart-row">
+          <h3>PulseAPI<small>API tests</small></h3>
+          <p>Write chained requests in YAML, with environments, JSON Schema checks and response-time limits. Results come out as a table or JUnit.</p>
+          <code class="cmd">pulseapi run ./api-tests</code>
+        </article>
+        <article class="chart-row">
+          <h3>DepScope<small>dependencies</small></h3>
+          <p>Finds duplicate versions; unused, undeclared and outdated packages; heavy dependency trees; and import cycles. Prints graphs as Mermaid or Graphviz.</p>
+          <code class="cmd">depscope analyze</code>
+        </article>
+        <article class="chart-row">
+          <h3>EnvDoctor<small>environment config</small></h3>
+          <p>Compares <code>.env</code>, <code>.env.example</code>, your Zod schema, the code, Docker Compose and CI. Reports never show a secret's value.</p>
+          <code class="cmd">envdoctor check --schema src/env.ts</code>
+        </article>
+        <article class="chart-row">
+          <h3>CommitSmith<small>git history</small></h3>
+          <p>Suggests Conventional Commit messages from staged changes, lints them, writes changelogs, and blocks keys and <code>.env</code> files from being committed.</p>
+          <code class="cmd">commitsmith suggest</code>
+        </article>
+        <article class="chart-row">
+          <h3>ArchWatch<small>architecture</small></h3>
+          <p>You declare layers and the imports they're allowed. It catches imports that cross the line, deep imports into a module's internals, and circular imports.</p>
+          <code class="cmd">archwatch check</code>
+        </article>
+        <article class="chart-row">
+          <h3>LogLens<small>logs</small></h3>
+          <p>Reads JSON, logfmt and plain-text logs and groups the errors into a short list. Shows which exceptions keep coming back and when they spike.</p>
+          <code class="cmd">loglens analyze ./logs/app.log</code>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="At a glance" style="padding-top: 0">
+    <div class="wrap">
+      <div class="facts">
+        <div><strong>8</strong><span>checks in one package</span></div>
+        <div><strong>4</strong><span>output formats: text, JSON, Markdown and SARIF</span></div>
+        <div><strong>0</strong><span>config files needed to start</span></div>
+        <div><strong>72</strong><span>tests against real git repos and HTTP servers</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ci" aria-labelledby="ci-title">
+    <div class="wrap split">
+      <div>
+        <h2 id="ci-title">Fails the pull request, not the deploy</h2>
+        <p class="intro">Add one step to your workflow. Problems show up inline in the PR through GitHub code scanning, and the job fails before anything risky merges.</p>
+        <ul class="points">
+          <li><b>Checks only what's new</b><span>MigraGuard <code>--since origin/main</code> skips migrations that already ran.</span></li>
+          <li><b>Your threshold</b><span><code>--fail-on warning</code> to be strict, or <code>none</code> to only report.</span></li>
+          <li><b>Readable anywhere</b><span>Markdown for PR comments, SARIF for code scanning, JSON for your own scripts.</span></li>
+        </ul>
+      </div>
+      <div>
+<pre class="code" aria-label="GitHub Actions example"><span class="cm"># .github/workflows/checks.yml</span>
+<span class="k">on</span>: pull_request
+<span class="k">permissions</span>:
+  <span class="k">contents</span>: read
+  <span class="k">security-events</span>: write
+<span class="k">jobs</span>:
+  <span class="k">devdoctor</span>:
+    <span class="k">runs-on</span>: ubuntu-latest
+    <span class="k">steps</span>:
+      - <span class="k">uses</span>: actions/checkout@v4
+        <span class="k">with</span>: { <span class="k">fetch-depth</span>: 0 }
+      - <span class="k">uses</span>: actions/setup-node@v4
+        <span class="k">with</span>: { <span class="k">node-version</span>: 22 }
+      - <span class="k">run</span>: <span class="s">npm ci</span>
+      - <span class="k">run</span>: <span class="s">npx devdoctor check -f sarif -o dd.sarif --fail-on none</span>
+      - <span class="k">uses</span>: github/codeql-action/upload-sarif@v3
+        <span class="k">with</span>: { <span class="k">sarif_file</span>: dd.sarif }
+      - <span class="k">run</span>: <span class="s">npx devdoctor check</span>
+      - <span class="k">run</span>: <span class="s">npx migraguard check --since origin/main</span></pre>
+        <div class="exit" aria-label="Exit codes">
+          <div><code>0</code><span>All clear</span></div>
+          <div><code>1</code><span>Problems at or above <code>--fail-on</code></span></div>
+          <div><code>2</code><span>Usage or config error</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="config" aria-labelledby="config-title">
+    <div class="wrap split">
+      <div>
+        <h2 id="config-title">Zero config to start. One file when you need it.</h2>
+        <p class="intro">Every check works out of the box. When you want rules of your own, put them in <code>devdoctor.config.json</code>, which comes with a JSON Schema for editor autocomplete.</p>
+        <ul class="points">
+          <li><b>Architecture rules</b><span>Layers, forbidden imports, and folders that can only be reached through their entry file.</span></li>
+          <li><b>API environments</b><span>Local, staging and production base URLs for PulseAPI.</span></li>
+          <li><b>Ignore by rule</b><span>Turn off a rule for the whole repo, or for one file.</span></li>
+        </ul>
+      </div>
+<pre class="code" aria-label="Config example">{
+  <span class="k">"archwatch"</span>: {
+    <span class="k">"layers"</span>: {
+      <span class="k">"domain"</span>: <span class="s">"src/domain/**"</span>,
+      <span class="k">"infra"</span>: <span class="s">"src/infra/**"</span>,
+      <span class="k">"ui"</span>: <span class="s">"src/ui/**"</span>
+    },
+    <span class="k">"rules"</span>: [
+      { <span class="k">"from"</span>: <span class="s">"domain"</span>, <span class="k">"allow"</span>: [] },
+      { <span class="k">"from"</span>: <span class="s">"ui"</span>, <span class="k">"disallow"</span>: [<span class="s">"infra"</span>] }
+    ]
+  },
+  <span class="k">"envdoctor"</span>: { <span class="k">"schema"</span>: <span class="s">"src/env.ts"</span> },
+  <span class="k">"migraguard"</span>: { <span class="k">"pgVersion"</span>: 16 },
+  <span class="k">"repodoctor"</span>: { <span class="k">"minScore"</span>: 80 }
+}</pre>
+    </div>
+  </section>
+
+  <section class="final" aria-labelledby="final-title">
+    <div class="wrap">
+      <div>
+        <h2 id="final-title">Run your first check-up.</h2>
+        <p class="intro" style="margin: 14px 0 0">It takes seconds and changes nothing in your repo.</p>
+      </div>
+      <div class="install" style="min-width: min(420px, 100%)">
+        <code><span class="pr">$ </span>npx devdoctor check</code>
+        <button type="button" class="copy-again" aria-label="Copy the command">Copy</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>DevDoctor · MIT License · Built by Wealth Hajoh</span>
+    <span><a href="https://www.npmjs.com/package/devdoctor">npm</a> · <a href="https://github.com/YOUR-USERNAME/devdoctor">GitHub</a> · <a href="https://github.com/YOUR-USERNAME/devdoctor/blob/main/CHANGELOG.md">Changelog</a></span>
+  </div>
+</footer>
+
+<script>
+  // Example output for each tool, taken from real runs. Classes: r red, y yellow, g green, b blue, c cyan, d dim, bo bold.
+  const OUTPUT = {
+    repodoctor: { errors: 0, text: `<span class="cmd"><span class="p">$</span> repodoctor scan ./</span>
+<span class="bo">RepoDoctor: pingwell</span>
+  <span class="g">███████████████████</span><span class="d">░</span> <span class="g bo">94/100</span>
+  <span class="d">grade:</span> <span class="bo">A</span>   <span class="d">files:</span> <span class="bo">81</span>   <span class="d">test files:</span> <span class="bo">8</span>
+
+  <span class="bo">Health by area</span>
+    <span class="d">Area                 Score  Problems</span>
+    Tests                96     0
+    TypeScript           100    0
+    CI (GitHub Actions)  88     0
+    Docker               85     1
+
+  <span class="y">▲</span> web/Dockerfile: the container runs as root <span class="d">[docker/runs-as-root]</span>
+    <span class="c">web/Dockerfile</span>
+    <span class="d">→ Add \`USER node\` in the final stage.</span>
+
+  <span class="y">1 warning</span>, <span class="b">2 notes</span>` },
+    migraguard: { errors: 2, text: `<span class="cmd"><span class="p">$</span> migraguard check</span>
+<span class="bo">MigraGuard: migration safety (PostgreSQL)</span>
+  <span class="d">checked:</span> <span class="bo">2</span>   <span class="d">framework:</span> <span class="bo">prisma</span>   <span class="d">high risk:</span> <span class="bo">1</span>
+
+  <span class="r">✖</span> Adds NOT NULL column User.role without a default
+    <span class="c">prisma/migrations/20260301_roles/migration.sql:1</span>
+    <span class="d">→ Fails if the table has any rows. Add a DEFAULT,
+      or add it nullable, backfill, then SET NOT NULL.</span>
+  <span class="r">✖</span> Drops column User.legacy_flag and its data
+    <span class="c">prisma/migrations/20260301_roles/migration.sql:3</span>
+  <span class="y">▲</span> Creating an index on User blocks writes until it finishes
+    <span class="c">prisma/migrations/20260301_roles/migration.sql:2</span>
+    <span class="d">→ Use CREATE INDEX CONCURRENTLY.</span>
+
+  <span class="r">2 errors</span>, <span class="y">1 warning</span>` },
+    pulseapi: { errors: 1, text: `<span class="cmd"><span class="p">$</span> pulseapi run ./api-tests --env staging</span>
+<span class="bo">users.yaml</span>
+  <span class="g">✔</span> Health <span class="d">200 · 41 ms</span>
+  <span class="g">✔</span> Create a user <span class="d">201 · 118 ms</span>
+  <span class="g">✔</span> Fetch the user <span class="d">200 · 36 ms</span>
+  <span class="r">✖</span> Search users <span class="d">200 · 912 ms</span>
+
+  <span class="r">✖</span> Users › Search users: under 500 ms (took 912 ms)
+    <span class="c">api-tests/users.yaml:31</span>
+
+  <span class="d">passed:</span> <span class="bo">3</span>   <span class="d">failed:</span> <span class="bo">1</span>   <span class="d">p50 ms:</span> <span class="bo">41</span>
+  <span class="r">1 error</span>` },
+    depscope: { errors: 1, text: `<span class="cmd"><span class="p">$</span> depscope analyze</span>
+<span class="bo">DepScope: switchboard</span>
+  <span class="d">direct:</span> <span class="bo">49</span>  <span class="d">installed:</span> <span class="bo">455</span>  <span class="d">node_modules:</span> <span class="bo">185.3 MB</span>
+
+  <span class="bo">Heaviest direct dependencies</span>
+    <span class="d">Package          Size     Transitive</span>
+    vite             33.1 MB  63
+    @nestjs/swagger  17.0 MB  8
+
+  <span class="r">✖</span> chalk is imported but not declared in package.json
+    <span class="c">src/server.ts:4</span>
+  <span class="b">●</span> @nestjs/testing is in devDependencies but nothing uses it
+  <span class="b">●</span> 2 versions of socket.io are installed (4.8.3, 4.8.4)
+
+  <span class="r">1 error</span>, <span class="b">2 notes</span>` },
+    envdoctor: { errors: 3, text: `<span class="cmd"><span class="p">$</span> envdoctor check --schema src/env.ts</span>
+<span class="bo">EnvDoctor</span>
+  <span class="d">documented:</span> <span class="bo">11</span>   <span class="d">read in code:</span> <span class="bo">12</span>   <span class="d">checked:</span> <span class="bo">.env</span>
+
+  <span class="r">✖</span> DATABASE_URL in .env: expected a URL
+    <span class="c">.env:1</span>
+  <span class="r">✖</span> JWT_SECRET is empty in .env
+  <span class="r">✖</span> REDIS_URL is read by the code but not documented
+    <span class="c">src/queue.ts:8</span>
+  <span class="y">▲</span> docker-compose.yml: service "api" doesn't set JWT_SECRET
+
+  <span class="d">No values from .env appear in this report.</span>
+  <span class="r">3 errors</span>, <span class="y">1 warning</span>` },
+    commitsmith: { errors: 0, text: `<span class="cmd"><span class="p">$</span> commitsmith suggest</span>
+<span class="bo">CommitSmith: suggested messages</span>
+  <span class="d">files:</span> <span class="bo">3</span>   <span class="d">+:</span> <span class="bo">84</span>   <span class="d">-:</span> <span class="bo">12</span>   <span class="d">type:</span> <span class="bo">feat (new files or exports)</span>
+
+  <span class="bo">Best guess</span>
+    <span class="g">feat(auth): add oauth</span>
+
+    - add src/auth/oauth.ts
+    - update src/auth/session.ts
+    - update src/auth/routes.ts
+
+  <span class="g">✔</span> No secrets or sensitive files staged
+
+<span class="cmd"><span class="p">$</span> git commit -m "$(commitsmith suggest --raw)"</span>` },
+    archwatch: { errors: 2, text: `<span class="cmd"><span class="p">$</span> archwatch check</span>
+<span class="bo">ArchWatch: architecture boundaries</span>
+  <span class="d">files:</span> <span class="bo">214</span>   <span class="d">layers:</span> <span class="bo">4</span>   <span class="d">violations:</span> <span class="bo">1</span>   <span class="d">cycles:</span> <span class="bo">1</span>
+
+  <span class="r">✖</span> src/domain/order.ts imports src/infra/db.ts:
+    the domain must stay framework-free <span class="d">[boundary]</span>
+    <span class="c">src/domain/order.ts:1</span>
+  <span class="r">✖</span> Import cycle: features/cart → features/payments
+    → features/cart <span class="d">[circular-import]</span>
+    <span class="d">→ Extract the shared part into a module both use.</span>
+
+  <span class="r">2 errors</span>` },
+    loglens: { errors: 2, text: `<span class="cmd"><span class="p">$</span> loglens analyze ./logs --since 6h</span>
+<span class="bo">LogLens</span>
+  <span class="d">entries:</span> <span class="bo">48,210</span>   <span class="d">errors:</span> <span class="bo">312</span>   <span class="d">distinct problems:</span> <span class="bo">7</span>
+
+  <span class="r">✖</span> 268× TypeError: Cannot read properties of undefined
+    (reading 'id'), 09:02 → 14:41
+    <span class="d">→ at getUser (src/users.ts)</span>
+  <span class="r">✖</span> 31× Payment failed for order &lt;n&gt;
+  <span class="y">▲</span> 84 errors in the minute starting 13:07 (typically 1)
+    <span class="d">→ Check deploys or upstream outages around then.</span>
+
+  <span class="r">2 errors</span>, <span class="y">1 warning</span>` },
+  }
+
+  const tabs = document.getElementById("tabs")
+  const screen = document.getElementById("screen")
+  const vitals = document.getElementById("vitals")
+  const names = Object.keys(OUTPUT)
+
+  function show(name, focus) {
+    for (const b of tabs.children) {
+      const on = b.dataset.tool === name
+      b.setAttribute("aria-selected", String(on))
+      b.tabIndex = on ? 0 : -1
+      if (on && focus) b.focus()
+    }
+    screen.innerHTML = OUTPUT[name].text
+    screen.setAttribute("aria-labelledby", `tab-${name}`)
+    const n = OUTPUT[name].errors
+    vitals.textContent = n ? `${n} error${n > 1 ? "s" : ""}` : "all clear"
+    vitals.style.color = n ? "var(--mon-red)" : "var(--mon-green)"
+  }
+
+  for (const name of names) {
+    const b = document.createElement("button")
+    b.type = "button"
+    b.role = "tab"
+    b.id = `tab-${name}`
+    b.dataset.tool = name
+    b.textContent = name
+    b.addEventListener("click", () => {
+      show(name)
+      stopTour()
+    })
+    tabs.appendChild(b)
+  }
+  // Arrow keys move between tabs, as in any tab list.
+  tabs.addEventListener("keydown", (e) => {
+    const i = names.indexOf(document.activeElement?.dataset?.tool)
+    if (i === -1) return
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault()
+      show(names[(i + (e.key === "ArrowRight" ? 1 : names.length - 1)) % names.length], true)
+      stopTour()
+    }
+  })
+
+  // A slow tour through the tools until someone interacts (off for reduced motion).
+  let tour = null
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches
+  function stopTour() {
+    clearInterval(tour)
+    tour = null
+  }
+  show("migraguard")
+  if (!reduce) {
+    let i = names.indexOf("migraguard")
+    tour = setInterval(() => show(names[(i = (i + 1) % names.length)]), 6000)
+    document.querySelector(".monitor").addEventListener("pointerenter", stopTour, { once: true })
+  }
+
+  // Copy buttons.
+  for (const btn of document.querySelectorAll("#copy, .copy-again")) {
+    btn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText("npx devdoctor check")
+        btn.textContent = "Copied"
+      } catch {
+        btn.textContent = "Select it"
+      }
+      setTimeout(() => (btn.textContent = "Copy"), 1800)
+    })
+  }
+</script>
+</body>
+</html>

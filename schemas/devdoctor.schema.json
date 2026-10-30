@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DevDoctor configuration",
+  "description": "devdoctor.config.json. Each tool reads its own section; \"ignore\" at the top level applies to all tools.",
+  "type": "object",
+  "definitions": {
+    "ignore": { "type": "array", "items": { "type": "string" }, "description": "Rule ids, files, or rule:file pairs to leave out of reports" },
+    "severity": { "enum": ["error", "warning", "info"] },
+    "globs": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }] }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "ignore": { "$ref": "#/definitions/ignore" },
+    "repodoctor": {
+      "type": "object",
+      "properties": {
+        "ignore": { "$ref": "#/definitions/ignore" },
+        "skip": { "type": "array", "items": { "enum": ["tests", "docs", "typescript", "scripts", "ci", "docker", "hygiene"] } },
+        "minScore": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "migraguard": {
+      "type": "object",
+      "properties": {
+        "ignore": { "$ref": "#/definitions/ignore" },
+        "dir": { "type": "string" },
+        "dirs": { "type": "array", "items": { "type": "string" } },
+        "framework": { "enum": ["prisma", "drizzle", "knex", "sql"] },
+        "pgVersion": { "type": "integer", "minimum": 9 },
+        "since": { "type": "string", "description": "Default git ref for --since" }
+      }
+    },
+    "pulseapi": {
+      "type": "object",
+      "properties": {
+        "ignore": { "$ref": "#/definitions/ignore" },
+        "dir": { "type": "string", "default": "api-tests" },
+        "timeout": { "type": "integer", "minimum": 1 },
+        "variables": { "type": "object" },
+        "environments": { "type": "object", "additionalProperties": { "type": "object" } }
+      }
+    },
+    "depscope": {
+      "type": "object",
+      "properties": {
+        "ignore": { "$ref": "#/definitions/ignore" },
+        "ignorePackages": { "type": "array", "items": { "type": "string" } },
+        "registry": { "type": "string" },
+        "offline": { "type": "boolean" }
+      }
+    },
+    "envdoctor": {
+      "type": "object",
+      "properties": {
+        "ignore": { "$ref": "#/definitions/ignore" },
+        "env": { "type": "array", "items": { "type": "string" } },
+        "example": { "type": "string" },
+        "schema": { "type": "string", "description": "TS/JS file exporting a Zod schema" },
+        "schemaExport": { "type": "string" },
+        "allow": { "type": "array", "items": { "type": "string" } },
+        "vars": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "type": { "enum": ["string", "number", "integer", "port", "boolean", "url", "email", "json", "duration", "host"] },
+              "required": { "type": "boolean" },
+              "enum": { "type": "array", "items": { "type": "string" } },
+              "pattern": { "type": "string" },
+              "min": { "type": "number" },
+              "max": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "commitsmith": {
+      "type": "object",
+      "properties": {
+        "ignore": { "$ref": "#/definitions/ignore" },
+        "types": { "type": "array", "items": { "type": "string" } },
+        "scopes": { "type": "array", "items": { "type": "string" } },
+        "requireScope": { "type": "boolean" },
+        "maxSubject": { "type": "integer", "default": 72 },
+        "maxBodyLine": { "type": "integer", "default": 100 }
+      }
+    },
+    "archwatch": {
+      "type": "object",
+      "properties": {
+        "ignore": { "$ref": "#/definitions/ignore" },
+        "include": { "type": "array", "items": { "type": "string" } },
+        "layers": { "type": "object", "additionalProperties": { "$ref": "#/definitions/globs" } },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from"],
+            "properties": {
+              "from": { "type": "string" },
+              "allow": { "type": "array", "items": { "type": "string" } },
+              "disallow": { "type": "array", "items": { "type": "string" } },
+              "allowSameMatch": { "type": "boolean" },
+              "severity": { "$ref": "#/definitions/severity" },
+              "message": { "type": "string" }
+            }
+          }
+        },
+        "forbidden": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["import"],
+            "properties": {
+              "from": { "$ref": "#/definitions/globs" },
+              "import": { "$ref": "#/definitions/globs" },
+              "allowTypeOnly": { "type": "boolean" },
+              "severity": { "$ref": "#/definitions/severity" },
+              "message": { "type": "string" }
+            }
+          }
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["module"],
+            "properties": {
+              "module": { "type": "string" },
+              "entry": { "type": "array", "items": { "type": "string" } },
+              "severity": { "$ref": "#/definitions/severity" },
+              "message": { "type": "string" }
+            }
+          }
+        },
+        "cycles": { "enum": ["error", "warning", "info", "off"] },
+        "includeTypeOnly": { "type": "boolean" }
+      }
+    },
+    "loglens": { "type": "object", "properties": { "level": { "enum": ["trace", "debug", "info", "warn", "error", "fatal"] } } }
+  }
+}

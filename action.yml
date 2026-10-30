@@ -1,0 +1,37 @@
+name: DevDoctor
+description: Repo health, migration safety, dependencies, env config, commit hygiene and architecture checks, with results in code scanning.
+branding:
+  icon: activity
+  color: blue
+inputs:
+  command:
+    description: 'What to run, e.g. "check" (every static tool) or "migraguard check --since origin/main"'
+    default: check
+  fail-on:
+    description: error, warning, info or none
+    default: error
+  sarif:
+    description: Upload results to GitHub code scanning (needs security-events write permission)
+    default: "true"
+  version:
+    description: devdoctor version from npm
+    default: latest
+runs:
+  using: composite
+  steps:
+    - name: Run DevDoctor
+      shell: bash
+      run: |
+        set +e
+        npx --yes devdoctor@${{ inputs.version }} ${{ inputs.command }} --fail-on ${{ inputs.fail-on }}
+        status=$?
+        if [ "${{ inputs.sarif }}" = "true" ]; then
+          npx --yes devdoctor@${{ inputs.version }} ${{ inputs.command }} --format sarif --output devdoctor.sarif --fail-on none
+        fi
+        exit $status
+    - name: Upload SARIF
+      if: always() && inputs.sarif == 'true' && hashFiles('devdoctor.sarif') != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: devdoctor.sarif
+        category: devdoctor

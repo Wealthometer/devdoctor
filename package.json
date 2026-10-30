@@ -1,0 +1,73 @@
+{
+  "name": "devdoctor",
+  "version": "0.1.0",
+  "description": "Eight pre-production checks in one CLI: repo health, migration safety, API tests, dependencies, env config, commits, architecture boundaries and logs.",
+  "keywords": [
+    "cli",
+    "lint",
+    "ci",
+    "migrations",
+    "postgres",
+    "dependencies",
+    "env",
+    "conventional-commits",
+    "architecture",
+    "logs",
+    "api-testing"
+  ],
+  "license": "MIT",
+  "author": "Wealth Hajoh <wealthhajoh87@gmail.com>",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "devdoctor": "bin/devdoctor.js",
+    "repodoctor": "bin/repodoctor.js",
+    "migraguard": "bin/migraguard.js",
+    "pulseapi": "bin/pulseapi.js",
+    "depscope": "bin/depscope.js",
+    "envdoctor": "bin/envdoctor.js",
+    "commitsmith": "bin/commitsmith.js",
+    "archwatch": "bin/archwatch.js",
+    "loglens": "bin/loglens.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "schemas",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
+    "test:coverage": "vitest run --coverage",
+    "check": "node bin/devdoctor.js check"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "jiti": "^2.7.0",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "^5.0.5",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.5",
+    "zod": "^4.6.7"
+  }
+}

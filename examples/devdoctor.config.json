@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/devdoctor/schemas/devdoctor.schema.json",
+  "repodoctor": { "minScore": 80 },
+  "migraguard": { "pgVersion": 16, "ignore": ["json-not-jsonb"] },
+  "envdoctor": { "schema": "src/env.ts", "allow": ["VERCEL_URL"] },
+  "depscope": { "ignorePackages": ["@types/node"] },
+  "commitsmith": { "scopes": ["api", "web", "db", "deps"] },
+  "pulseapi": {
+    "dir": "api-tests",
+    "environments": {
+      "local": { "baseUrl": "http://localhost:3000" },
+      "staging": { "baseUrl": "https://staging.example.com" }
+    }
+  },
+  "archwatch": {
+    "layers": {
+      "domain": "src/domain/**",
+      "app": "src/app/**",
+      "infra": "src/infra/**",
+      "ui": "src/ui/**"
+    },
+    "rules": [
+      { "from": "domain", "allow": [], "message": "the domain layer must not depend on anything" },
+      { "from": "app", "allow": ["domain"] },
+      { "from": "ui", "disallow": ["infra"] },
+      { "from": "src/features/*", "disallow": ["src/features/*"], "allowSameMatch": true, "message": "features talk through src/shared" }
+    ],
+    "forbidden": [
+      { "from": "src/ui/**", "import": ["node:*", "fs", "pg"], "message": "browser code can't use server modules" },
+      { "import": "moment", "message": "use date-fns" }
+    ],
+    "modules": [{ "module": "src/features/*", "entry": ["index.ts"] }],
+    "cycles": "error"
+  }
+}
